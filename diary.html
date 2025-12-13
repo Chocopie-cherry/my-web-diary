@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class of '09 Diary 📱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <!-- We'll use VT323 for a retro digital/console look -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /*
+         * CORE RETRO AESTHETIC STYLING
+         */
+        :root {
+            --ui-bg: #EAEAEA;
+            --phone-bg: #FFFFFF;
+            --accent-color: #3B82F6; 
+            --text-color: #1F2937;
+            --border-color: #9CA3AF;
+            --secondary-accent: #EC4899; 
+            --font-family: 'VT323', monospace;
+            --grid-pattern-color: rgba(0, 0, 0, 0.08); 
+            --realistic-frame-color: #2D3748; /* Dark Gray for 'Plastic' */
+            --realistic-screen-bezel: #000000; /* Black Bezel */
+            /* Default background properties (Will be set by JS) */
+            --body-background-image: none; 
+            --body-background-size: none;
+        }
+        
+        /* Theme Overrides (CSS Variables only) */
+        .theme-default { 
+            --ui-bg: #EAEAEA; --phone-bg: #FFFFFF; --accent-color: #3B82F6; --text-color: #1F2937; --border-color: #9CA3AF; --secondary-accent: #EC4899; --grid-pattern-color: rgba(0, 0, 0, 0.08); --realistic-frame-color: #2D3748; 
+        }
+        .theme-dark { 
+            --ui-bg: #1F2937; --phone-bg: #374151; --accent-color: #FBBF24; --text-color: #F3F4F6; --border-color: #4B5563; --secondary-accent: #10B981; --grid-pattern-color: rgba(243, 244, 246, 0.1); --realistic-frame-color: #111827;
+        }
+        .theme-pink { 
+            --ui-bg: #FBCFE8; --phone-bg: #FFFFFF; --accent-color: #DB2777; --text-color: #4A044E; --border-color: #F472B6; --secondary-accent: #9333EA; --grid-pattern-color: rgba(219, 39, 119, 0.15); --realistic-frame-color: #F87171; 
+        }
+        .theme-neon { 
+            --ui-bg: #111827; --phone-bg: #000000; --accent-color: #10B981; --text-color: #ECFDF5; --border-color: #1F2937; --secondary-accent: #3B82F6; --grid-pattern-color: rgba(16, 185, 129, 0.2); --realistic-frame-color: #000000;
+        }
+        .theme-pastel { 
+            --ui-bg: #FFFBEB; --phone-bg: #FFFFFF; --accent-color: #A7F3D0; --text-color: #7F1D1D; --border-color: #BFDBFE; --secondary-accent: #DBCFEA; --grid-pattern-color: rgba(253, 164, 175, 0.3); --realistic-frame-color: #C3DAF8;
+        }
+        .theme-grunge { 
+            --ui-bg: #1A1A1A; --phone-bg: #333333; --accent-color: #A3A3A3; --text-color: #D4D4D4; --border-color: #4B5563; --secondary-accent: #EF4444; --grid-pattern-color: rgba(255, 255, 255, 0.05); --realistic-frame-color: #000000;
+        }
+        .theme-cottagecore { 
+            --ui-bg: #F3F4F6; --phone-bg: #FFFAF0; --accent-color: #4F7942; --text-color: #3C2F2F; --border-color: #A9A9A9; --secondary-accent: #E5B074; --grid-pattern-color: rgba(79, 121, 66, 0.1); --realistic-frame-color: #D2B48C;
+        }
+
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--ui-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            /* Dynamic Background controlled by JS/CSS variables */
+            background-image: var(--body-background-image);
+            background-size: var(--body-background-size);
+            background-blend-mode: overlay;
+        }
+
+        /* Outer Frame mimicking a Realistic Phone/PDA */
+        .phone-frame {
+            background-color: var(--realistic-frame-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.1);
+            max-width: 450px;
+            width: 100%;
+            height: 90vh; 
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 10px;
+            position: relative;
+        }
+        
+        /* Speaker Grille & Camera Notch */
+        .speaker-grille {
+            height: 4px;
+            width: 50px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 2px;
+            margin: 0.5rem auto 0.5rem auto;
+        }
+        
+        /* Internal Screen Container */
+        .screen-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 12px;
+            background: var(--realistic-screen-bezel);
+            border: 2px solid var(--text-color); 
+        }
+        
+        /* Camera Notch Style */
+        .camera-notch {
+            height: 8px;
+            width: 32px;
+            border-radius: 0 0 8px 8px; 
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); 
+        }
+
+        /* Screen with Grid/Paper Aesthetic */
+        .phone-screen {
+            flex-grow: 1;
+            background-color: var(--phone-bg);
+            /* Grid pattern for the background */
+            background-image: linear-gradient(0deg, var(--grid-pattern-color) 1px, transparent 1px),
+                              linear-gradient(90deg, var(--grid-pattern-color) 1px, transparent 1px);
+            background-size: 20px 20px;
+            padding: 1rem;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        /* Retro Button Style */
+        .retro-btn {
+            background-color: var(--accent-color);
+            color: var(--phone-bg);
+            border: 2px solid var(--text-color);
+            padding: 0.5rem 1rem;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            line-height: 1;
+            box-shadow: 4px 4px 0 var(--text-color);
+            transition: all 0.1s;
+            white-space: nowrap;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .retro-btn:hover {
+            background-color: var(--secondary-accent);
+            box-shadow: 2px 2px 0 var(--text-color);
+            transform: translate(2px, 2px);
+        }
+        .retro-btn:active {
+            box-shadow: 0 0 0 var(--text-color);
+            transform: translate(4px, 4px);
+        }
+
+        /* Status Bar Style */
+        .status-bar {
+            background-color: var(--accent-color);
+            color: var(--phone-bg);
+            padding: 0.25rem 0.5rem;
+            font-size: 1rem;
+            line-height: 1;
+            border-bottom: 2px solid var(--text-color); 
+            /* Added fine detail shadow to upper bar */
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Text Message Look */
+        .text-bubble {
+            background-color: var(--secondary-accent);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 12px 12px 12px 0;
+            max-width: 90%; 
+            margin-bottom: 1rem;
+            border: 2px solid var(--text-color);
+            box-shadow: 2px 2px 0 var(--text-color);
+            word-wrap: break-word; 
+        }
+
+        /* Input area styled like a message box */
+        .text-input-box {
+            background-color: white;
+            color: var(--text-color);
+            border: 3px solid var(--text-color);
+            padding: 0.5rem;
+            box-shadow: 0 4px 0 var(--text-color); 
+            resize: none;
+            font-size: 1rem;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- The main Class of '09 phone container -->
+    <div id="app" class="phone-frame w-full mx-auto">
+        
+        <div class="speaker-grille"></div>
+
+        <div class="screen-container">
+            <!-- Camera Notch Detail for realism -->
+            <div class="w-full flex justify-center p-1 bg-transparent">
+                <div class="camera-notch" style="background-color: var(--realistic-screen-bezel);"></div> 
+            </div>
+
+            <!-- Status Bar -->
+            <div id="status-bar" class="status-bar flex justify-between items-center">
+                <span class="text-xs tracking-widest" id="carrier-name">DIARYNET</span>
+                
+                <div class="flex space-x-2 text-xs items-center">
+                    <!-- Signal icon (simplified) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 17h-1v-4h1v4zm-2 0h-1v-6h1v6zm-2 0h-1v-8h1v8zm-2 0h-1v-10h1v10zm-2 0h-1v-12h1v12z"/></svg>
+                    
+                    <!-- Wi-Fi icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.5c-3.1 0-6.1-1.2-8.4-3.5L12 7.7l8.4 10.3c-2.3 2.3-5.3 3.5-8.4 3.5zm0-11c-2.5 0-4.8-1-6.7-2.7L12 4.2l6.7 6.6c-1.9 1.7-4.2 2.7-6.7 2.7z"/></svg>
+                    
+                    <span id="current-date-time"></span>
+                    
+                    <!-- Battery icon (with a charge symbol for detail) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M18 6V4h-2V2H8v2H6v2H4v14h16V6h-2zM6 18V6h2v12H6zm10 0v-4h2v4h-2z"/><path d="M11 12h2l-1 3-1-3z" fill="var(--secondary-accent)"/></svg>
+                </div>
+            </div>
+
+            <!-- Main Screen Viewport (Dynamically switches content) -->
+            <div id="content-view" class="phone-screen flex flex-col space-y-4">
+                <!-- Content will be injected here by JavaScript -->
+                <div class="text-center mt-8">
+                    <div class="animate-spin inline-block w-8 h-8 border-4 rounded-full" style="border-top-color: var(--secondary-accent); border-color: var(--accent-color);"></div>
+                    <p class="mt-4 text-sm">LOADING DIARY...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel / Footer Navigation (Chunky buttons) -->
+        <div id="nav-panel" class="p-4 flex justify-around bg-transparent mt-2">
+            <button class="retro-btn" onclick="navigateTo('diary')">Journal</button>
+            <button class="retro-btn" onclick="navigateTo('customization')">Skins</button>
+            <button class="retro-btn" onclick="navigateTo('account')">Account</button>
+            <button class="retro-btn" onclick="navigateTo('new-entry')">Write</button>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // Global Firebase Configuration and Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, setLogLevel, doc, deleteDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        setLogLevel('Debug');
+        
+        let db, auth, userId, appId, isAuthReady = false;
+        let currentDiaryId = null; 
+
+        // Configuration variables (MUST be used)
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        appId = typeof __app_id !== 'undefined' ? __app_id : 'class-of-09-diary';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Customization State
+        const themeVars = {
+            theme: 'cottagecore', // Defaulting to the new theme for testing
+            carrierName: 'DIARYNET',
+        };
+        
+        // --- TONE.JS AUDIO SETUP ---
+        let clickSynth;
+        let isAudioInitialized = false;
+
+        const soundPresets = {
+            'default': { type: "square", pitch: "C5", duration: "16n", volume: 0 },
+            'dark': { type: "sine", pitch: "C3", duration: "8n", volume: -8, envelope: { attack: 0.01, decay: 0.2, sustain: 0.01, release: 0.3 } },
+            'pink': { type: "triangle", pitch: "G6", duration: "32n", volume: 0, envelope: { attack: 0.001, decay: 0.08, sustain: 0.001, release: 0.05 } }, // Chirpier, higher
+            'neon': { type: "square", pitch: "E5", duration: "16n", volume: 0, envelope: { attack: 0.005, decay: 0.05, sustain: 0.005, release: 0.05 } }, // Sharp Bleep
+            'pastel': { type: "sine", pitch: "F#5", duration: "8n", volume: -5, envelope: { attack: 0.02, decay: 0.2, sustain: 0.1, release: 0.3 } }, // Soft Chime
+            'grunge': { type: "sawtooth", pitch: "C2", duration: "8n", volume: -3, envelope: { attack: 0.001, decay: 0.1, sustain: 0.01, release: 0.1 } }, // Low, harsh noise
+            'cottagecore': { type: "sine", pitch: "A4", duration: "4n", volume: -10, envelope: { attack: 0.01, decay: 0.4, sustain: 0.05, release: 0.6 } }, // Gentle, warm tone
+        };
+
+        async function initializeAudio() {
+            if (isAudioInitialized || typeof Tone === 'undefined') return;
+            try {
+                await Tone.start();
+                // Initialize with a simple synth (parameters will be updated dynamically)
+                clickSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+                console.log("Audio Context Started.");
+                isAudioInitialized = true;
+                // Apply current theme settings immediately after init
+                applySoundPreset(themeVars.theme); 
+            } catch (error) {
+                console.warn("Audio initialization failed:", error);
+            }
+        }
+        
+        function applySoundPreset(theme) {
+            const preset = soundPresets[theme] || soundPresets['default'];
+            if (clickSynth) {
+                // Set main parameters
+                clickSynth.set({ 
+                    oscillator: { type: preset.type }, 
+                    envelope: preset.envelope || { attack: 0.005, decay: 0.08, sustain: 0.01, release: 0.1 }
+                });
+                // Set volume
+                clickSynth.volume.value = preset.volume || 0;
+            }
+        }
+
+        function playClick() {
+            initializeAudio(); // Attempt to initialize on first click
+            if (clickSynth && isAudioInitialized) {
+                const preset = soundPresets[themeVars.theme] || soundPresets['default'];
+                // Trigger the tone using the theme's pitch and duration
+                clickSynth.triggerAttackRelease(preset.pitch, preset.duration || "16n");
+            }
+        }
+        
+        // --- 1. FIREBASE INITIALIZATION AND AUTHENTICATION (Automated) ---
+        
+        if (Object.keys(firebaseConfig).length > 0) {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            (async () => {
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("Signed in with custom token.");
+                    } else {
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously.");
+                    }
+                } catch (error) {
+                    console.error("Initial Firebase Sign-in Failed:", error);
+                    alertUser('error', 'Authentication failed! Check console.');
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        currentDiaryId = userId;
+                        isAuthReady = true;
+                        console.log("Firebase Auth Ready. User ID:", userId);
+                        await loadUserCustomization();
+                        navigateTo('diary', false); // No sound for initial load
+                    } else {
+                        userId = null;
+                        isAuthReady = true;
+                        navigateTo('account', false); 
+                        console.log("User signed out.");
+                    }
+                });
+            })();
+        } else {
+            console.error("Firebase config not available. App will run in guest mode without persistent storage.");
+            userId = 'guest-user-' + crypto.randomUUID();
+            currentDiaryId = userId;
+            isAuthReady = true;
+            setTimeout(() => {
+                loadUserCustomization();
+                navigateTo('diary', false); 
+            }, 500);
+        }
+        
+        // **FIXED PATH**: Use the mandatory 7-segment path C/D/C/D/C/D/C
+        const getDiaryEntriesCollectionRef = (currentDiaryId) => {
+            if (!db) return null;
+            // Path: artifacts/{appId}/public/data/diaries/{diaryId}/entries
+            const path = `artifacts/${appId}/public/data/diaries/${currentDiaryId}/entries`;
+            return collection(db, path);
+        };
+
+
+        window.handleSignOut = async () => {
+            playClick();
+            try {
+                if (auth && auth.currentUser) {
+                    await signOut(auth);
+                    alertUser('success', 'logged out! bye, friend.');
+                } else {
+                    alertUser('note', 'u r already logged out (or in guest mode).');
+                }
+            } catch (error) {
+                console.error("Sign Out Error:", error);
+                alertUser('error', `sign out failed: ${error.message}`);
+            }
+        };
+
+
+        // --- 2. THEME AND CUSTOMIZATION LOGIC ---
+
+        function applyCustomization() {
+            const body = document.body;
+            const bodyStyle = body.style;
+            
+            // 1. Apply theme classes
+            body.className = body.className.split(' ').filter(c => !c.startsWith('theme-')).join(' ');
+            body.classList.add(`theme-${themeVars.theme}`);
+            
+            // 2. Set Carrier Name
+            const carrier = document.getElementById('carrier-name');
+            if (carrier) carrier.textContent = themeVars.carrierName.substring(0, 12);
+
+            // 3. Set Dynamic Background based on theme
+            let bgImage, bgSize;
+
+            switch (themeVars.theme) {
+                case 'dark':
+                    // Subtle dark crosshatch/hologram
+                    bgImage = `linear-gradient(0deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px)`;
+                    bgSize = '10px 10px';
+                    break;
+                case 'pink':
+                    // Repeating hearts/dots using radial gradients
+                    bgImage = `radial-gradient(circle at 75% 25%, var(--secondary-accent) 4px, transparent 5px), radial-gradient(circle at 25% 75%, var(--accent-color) 4px, transparent 5px)`;
+                    bgSize = '80px 80px';
+                    break;
+                case 'neon':
+                    // Circuit Board Grid with subtle line detail
+                    bgImage = `repeating-linear-gradient(45deg, var(--accent-color) 0 1px, transparent 1px 15px), repeating-linear-gradient(-45deg, var(--secondary-accent) 0 1px, transparent 1px 15px)`;
+                    bgSize = '20px 20px';
+                    break;
+                case 'pastel':
+                    // Soft, scattered blobs
+                    bgImage = `radial-gradient(circle, var(--secondary-accent) 15px, transparent 16px), radial-gradient(circle, var(--accent-color) 10px, transparent 11px)`;
+                    bgSize = '120px 120px';
+                    break;
+                case 'grunge':
+                    // Static Noise/Grain Effect (using multiple gradients for complexity)
+                    bgImage = `linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)`;
+                    bgSize = '4px 4px, 4px 4px, 2px 2px, 2px 2px';
+                    break;
+                case 'cottagecore':
+                    // Enhanced: Gingham check pattern with subtle floral overlay
+                    const ginghamColor = 'rgba(100, 70, 50, 0.1)'; // Soft, light brown tint
+                    const ginghamSize = '30px';
+                    bgImage = `
+                        /* Gingham lines */
+                        repeating-linear-gradient(45deg, ${ginghamColor} 0 1px, transparent 1px ${ginghamSize}),
+                        repeating-linear-gradient(-45deg, ${ginghamColor} 0 1px, transparent 1px ${ginghamSize}),
+                        /* Subtle floral dots */
+                        radial-gradient(circle at 10% 90%, var(--secondary-accent) 2px, transparent 3px), 
+                        radial-gradient(circle at 80% 20%, var(--accent-color) 3px, transparent 4px)
+                    `;
+                    bgSize = `${ginghamSize} ${ginghamSize}, ${ginghamSize} ${ginghamSize}, 100px 100px, 100px 100px`; 
+                    break;
+                case 'default':
+                default:
+                    // Classic simple grid
+                    bgImage = `repeating-linear-gradient(45deg, var(--ui-bg), var(--ui-bg) 10px, rgba(0,0,0,0.1) 11px, rgba(0,0,0,0.1) 12px)`;
+                    bgSize = '16px 16px';
+                    break;
+            }
+
+
+            bodyStyle.setProperty('--body-background-image', bgImage.trim());
+            bodyStyle.setProperty('--body-background-size', bgSize);
+            
+            // 4. Update Sound
+            applySoundPreset(themeVars.theme);
+
+            // 5. Re-apply highlight if on customization screen
+            if (document.getElementById('customization-view-container')) {
+                 highlightActiveTheme();
+            }
+
+            if (isAuthReady && userId && userId.indexOf('guest-user') === -1) {
+                saveUserCustomization();
+            }
+        }
+
+        async function saveUserCustomization() {
+            if (!db || !userId) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', 'customization');
+                await setDoc(docRef, themeVars, { merge: true });
+                console.log("Customization saved:", themeVars);
+            } catch (error) {
+                console.error("Error saving customization:", error);
+            }
+        }
+
+        async function loadUserCustomization() {
+            if (!isAuthReady || !userId || !db || userId.indexOf('guest-user') !== -1) {
+                applyCustomization();
+                return;
+            }
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', 'customization');
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const loadedVars = docSnap.data();
+                    themeVars.theme = loadedVars.theme || 'default';
+                    themeVars.carrierName = loadedVars.carrierName || 'DIARYNET';
+                    console.log("Customization loaded:", themeVars);
+                } else {
+                    console.log("No customization found, using defaults.");
+                }
+                applyCustomization();
+            } catch (error) {
+                console.error("Error loading customization:", error);
+            }
+        }
+
+        // --- 3. UI RENDERING AND NAVIGATION ---
+
+        const contentView = document.getElementById('content-view');
+        const navPanel = document.getElementById('nav-panel');
+
+        window.navigateTo = (view, play = true) => {
+            if(play) playClick(); // Play sound on navigation click
+            
+            if (!userId && view !== 'account') { 
+                view = 'account';
+            }
+            
+            contentView.innerHTML = '';
+            // Only show nav panel if authenticated or we're not currently on the account screen
+            navPanel.style.display = (view === 'account' && !auth?.currentUser && userId.indexOf('guest-user') !== -1) ? 'none' : 'flex';
+
+            if (unsubscribeSnapshot && view !== 'diary') {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+
+            switch (view) {
+                case 'diary':
+                    renderDiaryView();
+                    break;
+                case 'new-entry':
+                    renderNewEntryView();
+                    break;
+                case 'customization':
+                    renderCustomizationView();
+                    break;
+                case 'account':
+                    renderAccountView();
+                    break;
+                default:
+                    renderDiaryView();
+            }
+        }
+        
+        function renderDiaryView() {
+            const isPrivate = currentDiaryId === userId;
+            const diaryTitle = isPrivate ? '<3 M Y D I A R Y <3' : `~ ${currentDiaryId ? currentDiaryId.substring(0, 10).toUpperCase() : 'SHARED'}...'s T E A ~`;
+            
+            contentView.classList.add('flex-col');
+            contentView.classList.remove('justify-center', 'items-center');
+            contentView.innerHTML = `
+                <div class="text-xl font-bold mb-4 text-center border-b-2 pb-2" style="border-color: var(--accent-color);">
+                    ${diaryTitle}
+                </div>
+                
+                <!-- Collaboration/Share Input -->
+                <div class="mb-4 p-2 border-2 rounded-lg bg-gray-100/50" style="border-color: var(--border-color);">
+                    <label class="block text-xs font-bold mb-1" style="color: var(--text-color);">VIEW ANOTHER'S DIARY (enter User ID):</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="shared-id-input" class="text-input-box flex-grow p-1 text-xs shadow-none" placeholder="paste user id here">
+                        <button class="retro-btn text-xs p-1" onclick="viewSharedDiary()">G O</button>
+                    </div>
+                    ${!isPrivate ? `<button class="retro-btn w-full mt-2 bg-red-500 hover:bg-red-600" style="background-color: var(--secondary-accent);" onclick="navigateTo('diary')">BACK TO MINE</button>` : ''}
+                </div>
+
+                <div id="diary-list" class="flex flex-col space-y-4 flex-grow overflow-y-auto">
+                    <!-- Entries will be loaded here -->
+                    <p class="text-center text-sm italic opacity-70">
+                        Loading entries...
+                    </p>
+                </div>
+            `;
+            if (isAuthReady && db) {
+                setupDiaryListener();
+            }
+        }
+        
+        window.viewSharedDiary = () => {
+            playClick();
+            const sharedId = document.getElementById('shared-id-input').value.trim();
+            if (sharedId && sharedId !== userId) {
+                currentDiaryId = sharedId;
+                renderDiaryView();
+            } else if (sharedId === userId) {
+                 alertUser('note', 'thats ur own ID, silly! u r already viewing it.');
+            } else {
+                 alertUser('error', 'please enter a valid user ID.');
+            }
+        }
+
+
+        window.insertSticker = (sticker) => {
+            playClick();
+            const textarea = document.getElementById('entry-text');
+            if (textarea) {
+                // Insert the sticker at the current cursor position
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const value = textarea.value;
+                
+                textarea.value = value.substring(0, start) + sticker + value.substring(end);
+                
+                // Move cursor after the inserted sticker
+                textarea.selectionStart = textarea.selectionEnd = start + sticker.length;
+                textarea.focus();
+            }
+        }
+
+        function renderNewEntryView() {
+            contentView.classList.remove('justify-center', 'items-center');
+            contentView.classList.add('flex-col');
+            contentView.innerHTML = `
+                <div class="w-full h-full flex flex-col space-y-4">
+                    <div class="text-xl font-bold text-center" style="color: var(--secondary-accent);">
+                        ~ N E W T E X T ~
+                    </div>
+                    
+                    <!-- Sticker Picker -->
+                    <div class="space-y-1">
+                        <label class="block text-sm font-bold" style="color: var(--text-color);">ADD A STICKER:</label>
+                        <div class="flex flex-wrap gap-3 p-2 border-2 rounded-lg justify-center" style="border-color: var(--border-color); background-color: var(--ui-bg);">
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('💖')">💖</span>
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('✨')">✨</span>
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('🤫')">🤫</span>
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('💀')">💀</span>
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('🥺')">🥺</span>
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('💅')">💅</span>
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('🍕')">🍕</span>
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('📸')">📸</span>
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('💔')">💔</span>
+                            <span class="text-2xl cursor-pointer hover:scale-125 transition active:opacity-75" onclick="insertSticker('🦋')">🦋</span>
+                        </div>
+                    </div>
+
+                    <textarea id="entry-text" class="text-input-box flex-grow min-h-[150px]" placeholder="type ur daily gossip here... use emojis! 😜🤫"></textarea>
+                    
+                    <div class="space-y-1">
+                        <label class="block text-sm font-bold mb-1" style="color: var(--text-color);">
+                            IMAGE URL (paste link, no gallery upload allowed):
+                        </label>
+                        <input type="url" id="image-url" class="text-input-box w-full p-1 shadow-none" placeholder="paste a public image link here..." oninput="playClick()">
+                        <p class="text-xs italic opacity-70 font-semibold" style="color: var(--secondary-accent);">
+                            !! IMPORTANT: Direct file upload from your gallery is blocked by the system's security rules. Must be a public URL.
+                        </p>
+                    </div>
+
+                    <button class="retro-btn" onclick="saveEntry()">
+                        S E N D
+                    </button>
+                    <button class="retro-btn bg-gray-500 hover:bg-gray-600" style="background-color: var(--border-color);" onclick="navigateTo('diary')">
+                        C A N C E L
+                    </button>
+                </div>
+            `;
+        }
+        
+        function highlightActiveTheme() {
+            // Remove previous highlights
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-offset-2', 'ring-white/50');
+                btn.style.boxShadow = '';
+                btn.style.borderColor = 'var(--text-color)';
+            });
+            
+            // Add highlight to the active button
+            const activeBtn = document.querySelector(`.theme-btn[data-theme="${themeVars.theme}"]`);
+            if (activeBtn) {
+                // Apply a distinct style for selection
+                activeBtn.classList.add('ring-4', 'ring-offset-2');
+                activeBtn.style.setProperty('box-shadow', `inset 0 0 10px var(--secondary-accent), 0 0 10px var(--secondary-accent)`);
+                activeBtn.style.borderColor = 'var(--secondary-accent)';
+            }
+        }
+
+        function renderCustomizationView() {
+            contentView.classList.remove('flex-col');
+            contentView.classList.add('justify-center', 'items-center');
+            contentView.innerHTML = `
+                <div id="customization-view-container" class="w-full p-4 border-2 rounded-lg" style="border-color: var(--accent-color);">
+                    <div class="text-xl font-bold mb-4 text-center" style="color: var(--secondary-accent);">
+                        _ S K I N S _
+                    </div>
+
+                    <!-- Theme Selector -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-1">PHONE SKIN:</label>
+                        <div class="grid grid-cols-2 gap-2 justify-center">
+                            <button class="retro-btn theme-btn text-sm p-2" data-theme="default" onclick="setTheme('default')">
+                                Classic Blue
+                            </button>
+                            <button class="retro-btn theme-btn text-sm p-2" data-theme="dark" onclick="setTheme('dark')">
+                                E D G Y B L A C K
+                            </button>
+                            <button class="retro-btn theme-btn text-sm p-2" data-theme="pink" onclick="setTheme('pink')">
+                                P I N K D R E A M S
+                            </button>
+                            <button class="retro-btn theme-btn text-sm p-2" data-theme="neon" onclick="setTheme('neon')">
+                                N E O N G R E E N
+                            </button>
+                            <button class="retro-btn theme-btn text-sm p-2" data-theme="pastel" onclick="setTheme('pastel')">
+                                P A S T E L C O R E
+                            </button>
+                            <button class="retro-btn theme-btn text-sm p-2" data-theme="grunge" onclick="setTheme('grunge')">
+                                G R U N G E </3
+                            </button>
+                             <button class="retro-btn theme-btn text-sm p-2 col-span-2" data-theme="cottagecore" onclick="setTheme('cottagecore')">
+                                C O T T A G E C O R E
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Carrier Name Input -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-1">CARRIER NAME (12 chars max):</label>
+                        <input type="text" id="carrier-input" class="text-input-box w-full p-1 shadow-none" maxlength="12" value="${themeVars.carrierName}"
+                                oninput="setCarrierName(this.value); playClick()">
+                    </div>
+
+                    <button class="retro-btn w-full mt-4" onclick="navigateTo('diary')">
+                        B A C K
+                    </button>
+                </div>
+            `;
+            // Apply highlight after content is rendered
+            highlightActiveTheme();
+        }
+
+        function renderAccountView() {
+             contentView.classList.remove('flex-col');
+             contentView.classList.add('justify-center', 'items-center');
+             
+             const isLoggedIn = auth?.currentUser && userId.indexOf('guest-user') === -1;
+             const userStatus = isLoggedIn ? 'Authenticated' : 'Guest Mode / Signed Out';
+             const userUID = userId || 'N/A';
+             
+             const authContent = isLoggedIn ? `
+                <button class="retro-btn w-full mb-2 bg-red-500 hover:bg-red-600" style="background-color: var(--secondary-accent);" onclick="handleSignOut()">
+                    L O G O U T
+                </button>
+             ` : `
+                <div class="text-sm p-3 mb-4 text-center border-2 border-dashed" style="border-color: var(--secondary-accent);">
+                    <p>Authentication is handled automatically by the platform.</p>
+                    <p class="mt-2 font-bold">Your session is anonymous until you authenticate.</p>
+                </div>
+             `;
+
+             contentView.innerHTML = `
+                 <div class="w-full p-4 border-2 rounded-lg" style="border-color: var(--secondary-accent);">
+                     <div class="text-xl font-bold mb-4 text-center" style="color: var(--accent-color);">
+                         ~ A C C O U N T S T A T U S ~
+                     </div>
+                     <p class="text-sm mb-2">Status:</p>
+                     <div class="text-input-box p-3 mb-4 break-all shadow-none">
+                         <span class="text-sm font-bold block" style="color: var(--secondary-accent);">S T A T U S:</span>
+                         <span class="text-sm">${userStatus}</span>
+                     </div>
+                     
+                     <p class="text-sm mb-2">Your unique ID (share this to collaborate):</p>
+                     <div class="text-input-box p-3 mb-6 break-all shadow-none">
+                         <span class="text-sm font-bold block" style="color: var(--secondary-accent);">U S E R I D:</span>
+                         <span class="text-xs">${userUID}</span>
+                     </div>
+                     
+                     ${authContent}
+
+                     <button class="retro-btn w-full" onclick="navigateTo('diary')">
+                         B A C K
+                     </button>
+                 </div>
+             `;
+         }
+        
+        window.setTheme = (themeName) => {
+            playClick();
+            themeVars.theme = themeName;
+            applyCustomization();
+        }
+
+        window.setCarrierName = (name) => {
+            themeVars.carrierName = name;
+            applyCustomization();
+        }
+
+        // --- 4. DIARY ENTRY FUNCTIONS (FIRESTORE) ---
+
+        let unsubscribeSnapshot = null;
+        
+        function setupDiaryListener() {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+            }
+            
+            const entriesRef = getDiaryEntriesCollectionRef(currentDiaryId);
+            if (!entriesRef) {
+                const list = document.getElementById('diary-list');
+                if(list) list.innerHTML = `<p class="text-red-500 text-center text-sm">Cannot load diary: Database not initialized.</p>`;
+                return;
+            }
+
+            const q = query(entriesRef);
+
+            unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+                const entries = [];
+                snapshot.forEach(doc => {
+                    entries.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Sort entries by timestamp in descending order (newest first)
+                entries.sort((a, b) => (b.timestamp?.toMillis() || b.timestamp || 0) - (a.timestamp?.toMillis() || a.timestamp || 0));
+                
+                renderEntries(entries);
+            }, (error) => {
+                console.error("Error setting up diary listener:", error);
+                const list = document.getElementById('diary-list');
+                if(list) list.innerHTML = `<p class="text-red-500 text-center text-sm">Error loading diary. Does ID ${currentDiaryId} exist?</p>`;
+            });
+        }
+
+        function renderEntries(entries) {
+            const list = document.getElementById('diary-list');
+            if (!list) return;
+
+            if (entries.length === 0) {
+                list.innerHTML = `<p class="text-center text-sm italic mt-4 opacity-80">ur diary is empty! time to write some tea.</p>`;
+                return;
+            }
+
+            list.innerHTML = entries.map(entry => {
+                // Handle both serverTimestamp (Firestore Timestamp object) and Date.now() (number)
+                const timestampVal = entry.timestamp?.toMillis ? entry.timestamp.toMillis() : entry.timestamp;
+                const date = new Date(timestampVal);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                
+                // Render image if URL exists
+                const imageHtml = entry.imageUrl ? `
+                    <div class="w-full mt-2">
+                        <img src="${entry.imageUrl}" 
+                             onerror="this.onerror=null; this.src='https://placehold.co/400x200/EC4899/FFFFFF?text=IMAGE+ERROR%3A+CHECK+URL';" 
+                             class="max-w-full h-auto border-3 border-solid p-1 mt-2" style="border-color: var(--text-color);"/>
+                    </div>` : '';
+
+                const safeText = entry.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                const deleteButton = currentDiaryId === userId ? `
+                    <button class="text-xs mt-2 italic text-white/80 hover:text-white" onclick="deleteEntry('${entry.id}')">
+                        [ delete ]
+                    </button>` : '';
+
+
+                return `
+                    <div class="flex flex-col space-y-1">
+                        <!-- Message Header (Date/Time) -->
+                        <div class="text-xs text-center italic" style="color: var(--border-color);">
+                            ${dateStr} @ ${timeStr}
+                        </div>
+                        <!-- Text Bubble -->
+                        <div class="text-bubble self-end">
+                            <p class="text-sm leading-snug break-words">${safeText}</p>
+                            ${imageHtml}
+                            ${deleteButton}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.saveEntry = async () => {
+            playClick();
+            const textarea = document.getElementById('entry-text');
+            const imageUrlInput = document.getElementById('image-url');
+            
+            const text = textarea ? textarea.value.trim() : '';
+            const imageUrl = imageUrlInput ? imageUrlInput.value.trim() : '';
+
+            if (text === '' && imageUrl === '') {
+                alertUser('error', 'u gotta write somethin or paste an image!');
+                return;
+            }
+            
+            if (!db || !userId) {
+                alertUser('error', 'Authentication needed to save entry.');
+                return;
+            }
+            
+            // Only allow posting to your own diary to prevent spam in shared diaries
+            if (currentDiaryId !== userId) {
+                alertUser('error', 'u can only post to ur own diary! go back to ur journal first.');
+                return;
+            }
+
+            try {
+                const entriesRef = getDiaryEntriesCollectionRef(currentDiaryId);
+                await addDoc(entriesRef, {
+                    text: text,
+                    imageUrl: imageUrl || null,
+                    timestamp: serverTimestamp(),
+                    posterId: userId 
+                });
+                alertUser('success', `entry sent to ur diary!`);
+                navigateTo('diary');
+            } catch (error) {
+                console.error("Error saving entry:", error);
+                alertUser('error', 'couldnt save diary entry! check console.');
+            }
+        }
+        
+        window.deleteEntry = async (id) => {
+            playClick();
+            if (currentDiaryId !== userId) {
+                 alertUser('error', 'u can only delete entries from ur own diary!');
+                 return;
+            }
+            
+            if (!db || !userId) {
+                alertUser('error', 'Authentication needed to delete entry.');
+                return;
+            }
+
+            const confirmDelete = await customConfirm('are u sure u wanna delete this entry? itll be gone forever.');
+            if (!confirmDelete) return;
+
+            try {
+                const docRef = doc(getDiaryEntriesCollectionRef(userId), id);
+                await deleteDoc(docRef);
+                alertUser('success', 'entry deleted. </3');
+            } catch (error) {
+                console.error("Error deleting entry:", error);
+                alertUser('error', 'couldnt delete entry! check console.');
+            }
+        }
+
+        // --- 5. UTILITY FUNCTIONS (Time and Custom Alert/Confirm) ---
+
+        function updateClock() {
+            const timeEl = document.getElementById('current-date-time');
+            if (timeEl) {
+                const now = new Date();
+                // Format: MMM DD | HH:MM AM/PM
+                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); 
+                const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                timeEl.textContent = `${dateStr} | ${timeStr}`;
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const modalContainer = document.createElement('div');
+        modalContainer.id = 'custom-modal-container';
+        modalContainer.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden';
+        document.body.appendChild(modalContainer);
+
+        window.closeAlertModal = () => {
+            playClick();
+            modalContainer.classList.add('hidden');
+        };
+
+        function alertUser(type, message) {
+            modalContainer.innerHTML = `
+                <div class="p-6 rounded-lg max-w-xs w-full border-4 shadow-xl" style="background-color: var(--phone-bg); border-color: var(--accent-color); color: var(--text-color);">
+                    <p class="text-lg font-bold mb-4 text-center">${type === 'error' ? '!!! ERROR !!!' : 'NOTE'}</p>
+                    <p class="text-sm mb-4 text-center">${message}</p>
+                    <button class="retro-btn w-full" onclick="closeAlertModal()">
+                        O K
+                    </button>
+                </div>
+            `;
+            modalContainer.classList.remove('hidden');
+        }
+
+        function customConfirm(message) {
+            return new Promise(resolve => {
+                window.resolveConfirmModal = (result) => {
+                    playClick();
+                    modalContainer.classList.add('hidden');
+                    resolve(result);
+                    delete window.resolveConfirmModal;
+                };
+
+                modalContainer.innerHTML = `
+                    <div class="p-6 rounded-lg max-w-xs w-full border-4 shadow-xl" style="background-color: var(--phone-bg); border-color: var(--accent-color); color: var(--text-color);">
+                        <p class="text-lg font-bold mb-4 text-center">?? R U S U R E ??</p>
+                        <p class="text-sm mb-4 text-center">${message}</p>
+                        <div class="flex justify-between space-x-2">
+                            <button class="retro-btn flex-1" onclick="resolveConfirmModal(true)">
+                                Y E S
+                            </button>
+                            <button class="retro-btn flex-1 bg-red-500 hover:bg-red-600" style="background-color: var(--secondary-accent);" onclick="resolveConfirmModal(false)">
+                                N O
+                            </button>
+                        </div>
+                    </div>
+                `;
+                modalContainer.classList.remove('hidden');
+            });
+        }
+    </script>
+</body>
+</html>
