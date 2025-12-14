@@ -1,10 +1,13 @@
-js
+<script type="module">
 
-import { createClient } from "...";
+// ---------- SUPABASE ----------
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const supabaseUrl = "...";
+const supabaseUrl = "https://gpzaoymswukyibfgxwkk.supabase.co";
 const supabaseKey = "sb_publishable_SatiAcL-pKjxuC96cZhCHw_Xs_mUF6W";
-const supabase = createClient(...);
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+console.log("Supabase ready", supabase);
 
 
 <!DOCTYPE html>
@@ -1004,6 +1007,7 @@ const supabase = createClient(...);
     </script>
 </body>
 </html>
+
 
 
 
