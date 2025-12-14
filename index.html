@@ -795,53 +795,48 @@ console.log("Supabase initialized");
 
         let unsubscribeSnapshot = null;
         
-        function setupDiaryListener() {
-            if (unsubscribeSnapshot) {
-                unsubscribeSnapshot();
-            }
+      async function setupDiaryListener() {
+  const list = document.getElementById("diary-list");
+  if (!list) return;
+
+  list.innerHTML = `<p class="text-center text-sm italic opacity-70">Loading entries...</p>`;
+
+  const { data, error } = await supabase
+    .from("diary_entries")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    list.innerHTML = `<p class="text-red-500 text-center text-sm">Failed to load diary</p>`;
+    return;
+  }
+
+  renderEntries(data);
+}
+
             
-            const entriesRef = getDiaryEntriesCollectionRef(currentDiaryId);
-            if (!entriesRef) {
-                const list = document.getElementById('diary-list');
-                if(list) list.innerHTML = `<p class="text-red-500 text-center text-sm">Cannot load diary: Database not initialized.</p>`;
-                return;
-            }
+            
+        
+function renderEntries(entries) {
 
-            const q = query(entriesRef);
-
-            unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
-                const entries = [];
-                snapshot.forEach(doc => {
-                    entries.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Sort entries by timestamp in descending order (newest first)
-                entries.sort((a, b) => (b.timestamp?.toMillis() || b.timestamp || 0) - (a.timestamp?.toMillis() || a.timestamp || 0));
-                
-                renderEntries(entries);
-            }, (error) => {
-                console.error("Error setting up diary listener:", error);
-                const list = document.getElementById('diary-list');
-                if(list) list.innerHTML = `<p class="text-red-500 text-center text-sm">Error loading diary. Does ID ${currentDiaryId} exist?</p>`;
-            });
-        }
-
-        function renderEntries(entries) {
-            const list = document.getElementById('diary-list');
-            if (!list) return;
-
-            if (entries.length === 0) {
-                list.innerHTML = `<p class="text-center text-sm italic mt-4 opacity-80">ur diary is empty! time to write some tea.</p>`;
-                return;
-            }
 
             list.innerHTML = entries.map(entry => {
-                // Handle both serverTimestamp (Firestore Timestamp object) and Date.now() (number)
-                const timestampVal = entry.timestamp?.toMillis ? entry.timestamp.toMillis() : entry.timestamp;
-                const date = new Date(timestampVal);
-                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-                
+              const date = new Date(entry.created_at);
+                const dateStr = date.toLocaleDateString('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric'
+});
+
+const timeStr = date.toLocaleTimeString('en-US', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false
+});
+
+ 
+
                 // Render image if URL exists
                 const imageHtml = entry.imageUrl ? `
                     <div class="w-full mt-2">
@@ -1007,6 +1002,7 @@ console.log("Supabase initialized");
     </script>
 </body>
 </html>
+
 
 
 
