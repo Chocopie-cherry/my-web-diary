@@ -240,7 +240,16 @@
 
     </div>
 
-    <script type="module">
+    <script type="module"> 
+        // ---------- SUPABASE ----------
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const supabaseUrl = "https://gpzaoymswukyibfgxwkk.supabase.co";
+const supabaseKey = "sb_publishable_SatiAcL-pKjxuC96cZhCHw_Xs_mUF6W";
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+console.log("Supabase initialized");
+
         // Global Firebase Configuration and Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -997,6 +1006,7 @@
     </script>
 </body>
 </html>
+
 
 
 
